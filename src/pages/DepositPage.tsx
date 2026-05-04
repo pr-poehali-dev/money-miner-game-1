@@ -3,22 +3,22 @@ import Icon from '@/components/ui/icon';
 
 const AMOUNTS = [200, 500, 1000, 2000, 5000];
 
+const BEELINE_PHONE = '79629031556';
+const BEELINE_PHONE_DISPLAY = '+7 (962) 903-15-56';
+
 export default function DepositPage() {
-  const [method, setMethod] = useState<'sber' | 'beeline'>('sber');
   const [amount, setAmount] = useState(500);
   const [customAmount, setCustomAmount] = useState('');
   const [step, setStep] = useState<'select' | 'instructions' | 'pending'>('select');
+  const [copied, setCopied] = useState(false);
 
   const finalAmount = customAmount ? parseInt(customAmount) || 0 : amount;
+  const payCode = `MINE-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
-  const sberDetails = {
-    phone: '+7 (900) 123-45-67',
-    name: 'Александр В.',
-    bank: 'Сбербанк',
-  };
-  const beelineDetails = {
-    phone: '+7 (915) 987-65-43',
-    comment: `MINE-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+  const copy = (text: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   if (step === 'pending') {
@@ -29,14 +29,18 @@ export default function DepositPage() {
         <p className="text-muted-foreground max-w-xs">
           После перевода администратор проверит платёж и зачислит деньги на баланс в течение 15 минут
         </p>
-        <div className="card-game p-4 w-full rounded-xl">
+        <div className="card-game p-4 w-full rounded-xl space-y-1">
           <div className="flex justify-between text-sm py-2">
             <span className="text-muted-foreground">Сумма</span>
             <span className="font-bold text-gold">₽ {finalAmount.toLocaleString('ru-RU')}</span>
           </div>
           <div className="flex justify-between text-sm py-2">
             <span className="text-muted-foreground">Метод</span>
-            <span>{method === 'sber' ? '🟢 Сбербанк' : '🟡 Билайн'}</span>
+            <span>🟡 Билайн</span>
+          </div>
+          <div className="flex justify-between text-sm py-2">
+            <span className="text-muted-foreground">Номер</span>
+            <span className="font-mono">{BEELINE_PHONE_DISPLAY}</span>
           </div>
           <div className="flex justify-between text-sm py-2">
             <span className="text-muted-foreground">Статус</span>
@@ -60,9 +64,7 @@ export default function DepositPage() {
           <button onClick={() => setStep('select')} className="text-muted-foreground hover:text-gold transition-colors">
             <Icon name="ArrowLeft" size={20} />
           </button>
-          <h1 className="font-oswald text-2xl font-bold gradient-text-gold tracking-wide">
-            {method === 'sber' ? '🟢 СБЕРБАНК' : '🟡 БИЛАЙН'}
-          </h1>
+          <h1 className="font-oswald text-2xl font-bold gradient-text-gold tracking-wide">🟡 ПОПОЛНЕНИЕ ЧЕРЕЗ БИЛАЙН</h1>
         </div>
 
         <div className="rounded-xl p-4 text-center"
@@ -71,96 +73,54 @@ export default function DepositPage() {
           <p className="font-oswald text-4xl font-bold text-neon-green">₽ {finalAmount.toLocaleString('ru-RU')}</p>
         </div>
 
-        {method === 'sber' ? (
-          <div className="space-y-3">
-            <div className="card-game p-4">
-              <p className="text-muted-foreground text-sm mb-3">Переведите деньги по номеру телефона:</p>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Телефон</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-oswald text-lg font-bold text-gold">{sberDetails.phone}</span>
-                    <button className="text-muted-foreground hover:text-gold transition-colors" onClick={() => navigator.clipboard?.writeText(sberDetails.phone)}>
-                      <Icon name="Copy" size={14} />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Получатель</span>
-                  <span className="font-medium">{sberDetails.name}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Банк</span>
-                  <span className="font-medium">{sberDetails.bank}</span>
-                </div>
-              </div>
-            </div>
-            <div className="glass-card p-3 rounded-xl">
-              <div className="flex gap-2 items-start">
-                <span className="text-yellow-400 text-lg">⚠️</span>
-                <p className="text-muted-foreground text-sm">
-                  В комментарии к переводу ничего писать не нужно. Отправляйте точную сумму.
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="card-game p-4">
-              <p className="text-muted-foreground text-sm mb-3">Переведите деньги на номер Билайн:</p>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Номер</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-oswald text-lg font-bold text-gold">{beelineDetails.phone}</span>
-                    <button className="text-muted-foreground hover:text-gold transition-colors" onClick={() => navigator.clipboard?.writeText(beelineDetails.phone)}>
-                      <Icon name="Copy" size={14} />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Код платежа</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-oswald text-lg font-bold text-yellow-400">{beelineDetails.comment}</span>
-                    <button className="text-muted-foreground hover:text-gold transition-colors" onClick={() => navigator.clipboard?.writeText(beelineDetails.comment)}>
-                      <Icon name="Copy" size={14} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="glass-card p-3 rounded-xl">
-              <div className="flex gap-2 items-start">
-                <span className="text-red-400 text-lg">❗</span>
-                <p className="text-muted-foreground text-sm">
-                  <strong className="text-foreground">Обязательно</strong> укажи код платежа в комментарии к переводу, иначе платёж не будет идентифицирован.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Реквизиты */}
+        <div className="card-game p-4 space-y-4">
+          <p className="text-muted-foreground text-sm">Пополни баланс телефона на номер:</p>
 
+          <div className="flex items-center justify-between py-3 border border-gold/30 rounded-xl px-4"
+            style={{ background: 'rgba(255,190,30,0.05)' }}>
+            <div>
+              <p className="text-muted-foreground text-xs mb-0.5">Номер Билайн</p>
+              <p className="font-oswald text-2xl font-bold text-gold">{BEELINE_PHONE_DISPLAY}</p>
+            </div>
+            <button
+              onClick={() => copy(BEELINE_PHONE)}
+              className="glass-card px-3 py-2 rounded-lg text-sm flex items-center gap-1.5 transition-all hover:border-gold"
+            >
+              <Icon name={copied ? 'Check' : 'Copy'} size={14} className={copied ? 'text-neon-green' : 'text-muted-foreground'} />
+              <span className={copied ? 'text-neon-green' : 'text-muted-foreground'}>{copied ? 'Скопировано' : 'Копировать'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Инструкция */}
         <div className="card-game p-4">
           <h3 className="font-oswald text-sm font-bold text-gold mb-3">КАК ПЕРЕВЕСТИ</h3>
-          <div className="space-y-2">
-            {(method === 'sber' ? [
-              'Открой приложение Сбербанк Онлайн',
-              'Нажми «Платежи» → «Переводы»',
-              `Введи номер ${sberDetails.phone}`,
-              `Укажи сумму ₽ ${finalAmount.toLocaleString('ru-RU')}`,
-              'Подтверди перевод',
-            ] : [
-              'Открой приложение Мой Билайн',
-              'Выбери «Перевод на номер»',
-              `Введи номер ${beelineDetails.phone}`,
-              `Укажи сумму ₽ ${finalAmount.toLocaleString('ru-RU')}`,
-              `В комментарии укажи код: ${beelineDetails.comment}`,
-            ]).map((step, i) => (
+          <div className="space-y-3">
+            {[
+              { text: 'Зайди на сайт или в приложение «Мой Билайн»', emoji: '📱' },
+              { text: 'Выбери раздел «Перевод баланса»', emoji: '💸' },
+              { text: `Введи номер получателя: ${BEELINE_PHONE_DISPLAY}`, emoji: '📞' },
+              { text: `Укажи сумму: ₽ ${finalAmount.toLocaleString('ru-RU')}`, emoji: '💰' },
+              { text: 'Подтверди перевод', emoji: '✅' },
+            ].map((item, i) => (
               <div key={i} className="flex gap-3 items-start">
-                <span className="text-gold font-oswald font-bold text-sm flex-shrink-0">{i + 1}.</span>
-                <span className="text-sm text-muted-foreground">{step}</span>
+                <span className="text-lg flex-shrink-0">{item.emoji}</span>
+                <div className="flex gap-2 items-start">
+                  <span className="text-gold font-oswald font-bold text-sm flex-shrink-0">{i + 1}.</span>
+                  <span className="text-sm text-muted-foreground">{item.text}</span>
+                </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="glass-card p-3 rounded-xl">
+          <div className="flex gap-2 items-start">
+            <span className="text-yellow-400 text-lg">⚠️</span>
+            <p className="text-muted-foreground text-sm">
+              Отправляй точную сумму. В комментарии ничего писать не нужно — платёж определяется по сумме и номеру.
+            </p>
           </div>
         </div>
 
@@ -178,34 +138,17 @@ export default function DepositPage() {
     <div className="animate-slide-up space-y-5">
       <h1 className="font-oswald text-2xl font-bold gradient-text-gold tracking-wide">ПОПОЛНЕНИЕ</h1>
 
-      {/* Method selection */}
+      {/* Method display */}
       <div className="card-game p-5">
         <p className="text-muted-foreground text-sm mb-3">Способ оплаты</p>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => setMethod('sber')}
-            className={`p-4 rounded-xl transition-all ${
-              method === 'sber'
-                ? 'border-2 border-green-500 bg-green-900/20'
-                : 'glass-card hover:border-green-500/50'
-            }`}
-          >
-            <div className="text-3xl mb-2">🟢</div>
-            <div className="font-oswald font-bold">Сбербанк</div>
-            <div className="text-muted-foreground text-xs">Перевод СБП</div>
-          </button>
-          <button
-            onClick={() => setMethod('beeline')}
-            className={`p-4 rounded-xl transition-all ${
-              method === 'beeline'
-                ? 'border-2 border-yellow-500 bg-yellow-900/20'
-                : 'glass-card hover:border-yellow-500/50'
-            }`}
-          >
-            <div className="text-3xl mb-2">🟡</div>
-            <div className="font-oswald font-bold">Билайн</div>
-            <div className="text-muted-foreground text-xs">С баланса телефона</div>
-          </button>
+        <div className="rounded-xl p-4 flex items-center gap-4"
+          style={{ background: 'rgba(255, 200, 0, 0.08)', border: '2px solid rgba(255, 200, 0, 0.35)' }}>
+          <div className="text-4xl">🟡</div>
+          <div>
+            <div className="font-oswald font-bold text-lg">Билайн</div>
+            <div className="text-muted-foreground text-sm">Перевод баланса мобильной связи</div>
+            <div className="text-gold font-mono text-sm mt-1">{BEELINE_PHONE_DISPLAY}</div>
+          </div>
         </div>
       </div>
 
@@ -237,21 +180,16 @@ export default function DepositPage() {
             className="w-full pl-8 pr-4 py-3 rounded-xl bg-secondary border border-border text-foreground font-rubik focus:outline-none focus:border-gold transition-colors"
           />
         </div>
-        <p className="text-muted-foreground text-xs mt-2">
-          Минимум ₽ 200 · Максимум ₽ 50 000
-        </p>
+        <p className="text-muted-foreground text-xs mt-2">Минимум ₽ 200 · Максимум ₽ 50 000</p>
       </div>
 
-      {/* Info */}
-      <div className="glass-card p-4 rounded-xl">
-        <div className="flex items-start gap-3">
-          <Icon name="Clock" size={18} className="text-gold flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium">Время зачисления</p>
-            <p className="text-muted-foreground text-xs mt-1">
-              Платёж проверяется администратором вручную. Обычно до 15 минут в рабочее время (9:00–23:00).
-            </p>
-          </div>
+      <div className="glass-card p-4 rounded-xl flex items-start gap-3">
+        <Icon name="Clock" size={18} className="text-gold flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium">Время зачисления</p>
+          <p className="text-muted-foreground text-xs mt-1">
+            Платёж проверяется администратором. Обычно до 15 минут в рабочее время (9:00–23:00).
+          </p>
         </div>
       </div>
 
