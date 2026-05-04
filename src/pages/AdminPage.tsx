@@ -28,7 +28,7 @@ const withdrawals = [
   { id: 'W002', userName: 'Игрок #3312', amount: 3000, phone: '+7 (915) 987-65-43', bank: 'Тинькофф', time: '04.05.2026 18:30', status: 'approved' as PaymentStatus },
 ];
 
-const ADMIN_PASSWORD = '1234';
+const ADMIN_PASSWORD = '2007';
 
 export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);

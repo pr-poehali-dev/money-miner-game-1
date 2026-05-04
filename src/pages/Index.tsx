@@ -23,7 +23,7 @@ const navItems: { id: Page; label: string; icon: string }[] = [
 
 export default function Index() {
   const [page, setPage] = useState<Page>('home');
-  const [balance, setBalance] = useState(3850);
+  const [balance, setBalance] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navigate = (p: string) => {
