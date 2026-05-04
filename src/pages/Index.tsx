@@ -8,17 +8,16 @@ import WithdrawalPage from './WithdrawalPage';
 import HistoryPage from './HistoryPage';
 import ProfilePage from './ProfilePage';
 import AdminPage from './AdminPage';
+import AviatorPage from './AviatorPage';
 
-type Page = 'home' | 'miner' | 'balance' | 'deposit' | 'withdrawal' | 'history' | 'profile' | 'admin';
+type Page = 'home' | 'miner' | 'aviator' | 'balance' | 'deposit' | 'withdrawal' | 'history' | 'profile' | 'admin';
 
 const navItems: { id: Page; label: string; icon: string }[] = [
   { id: 'home', label: 'Главная', icon: 'Home' },
   { id: 'miner', label: 'Майнер', icon: 'Pickaxe' },
+  { id: 'aviator', label: 'Авиатрикс', icon: 'PlaneTakeoff' },
   { id: 'balance', label: 'Баланс', icon: 'Wallet' },
   { id: 'deposit', label: 'Пополнить', icon: 'Plus' },
-  { id: 'withdrawal', label: 'Вывод', icon: 'ArrowUpRight' },
-  { id: 'history', label: 'История', icon: 'Clock' },
-  { id: 'profile', label: 'Профиль', icon: 'User' },
 ];
 
 export default function Index() {
@@ -35,6 +34,7 @@ export default function Index() {
     switch (page) {
       case 'home': return <HomePage onNavigate={navigate} balance={balance} />;
       case 'miner': return <MinerPage balance={balance} onBalanceChange={setBalance} />;
+      case 'aviator': return <AviatorPage balance={balance} onBalanceChange={setBalance} />;
       case 'balance': return <BalancePage balance={balance} onNavigate={navigate} />;
       case 'deposit': return <DepositPage />;
       case 'withdrawal': return <WithdrawalPage balance={balance} />;

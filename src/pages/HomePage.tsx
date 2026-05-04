@@ -53,6 +53,24 @@ export default function HomePage({ onNavigate, balance }: HomePageProps) {
         </div>
       </div>
 
+      {/* Games */}
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={() => onNavigate('miner')}
+          className="card-game p-4 text-center hover:border-gold transition-all group"
+          style={{ border: '1px solid rgba(255,190,30,0.15)' }}>
+          <div className="text-4xl mb-2 group-hover:animate-float">💎</div>
+          <div className="font-oswald font-bold text-gold">МАЙНЕР</div>
+          <div className="text-muted-foreground text-xs mt-1">Открывай ячейки</div>
+        </button>
+        <button onClick={() => onNavigate('aviator')}
+          className="card-game p-4 text-center hover:border-blue-500 transition-all group"
+          style={{ border: '1px solid rgba(96,165,250,0.15)' }}>
+          <div className="text-4xl mb-2 group-hover:animate-float">✈️</div>
+          <div className="font-oswald font-bold" style={{ color: '#60a5fa' }}>АВИАТРИКС</div>
+          <div className="text-muted-foreground text-xs mt-1">Успей забрать</div>
+        </button>
+      </div>
+
       {/* Balance */}
       <div className="card-game p-5">
         <div className="flex items-center justify-between">
