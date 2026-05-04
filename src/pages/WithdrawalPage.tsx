@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Icon from '@/components/ui/icon';
+import { getBalance, setBalance, getWithdrawals, saveWithdrawals } from '@/lib/store';
 
 interface WithdrawalPageProps {
   balance: number;
@@ -163,7 +164,23 @@ export default function WithdrawalPage({ balance }: WithdrawalPageProps) {
       </div>
 
       <button
-        onClick={() => canSubmit && setSubmitted(true)}
+        onClick={() => {
+          if (!canSubmit) return;
+          const newBalance = getBalance() - finalAmount;
+          setBalance(newBalance);
+          const list = getWithdrawals();
+          list.unshift({
+            id: `W${Date.now()}`,
+            amount: finalAmount,
+            payout,
+            phone,
+            bank,
+            time: new Date().toLocaleString('ru-RU'),
+            status: 'pending',
+          });
+          saveWithdrawals(list);
+          setSubmitted(true);
+        }}
         disabled={!canSubmit}
         className="w-full py-4 rounded-xl font-oswald text-xl font-bold btn-gold glow-gold disabled:opacity-40 disabled:cursor-not-allowed"
       >

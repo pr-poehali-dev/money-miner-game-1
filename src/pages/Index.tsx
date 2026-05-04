@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
+import { getBalance, setBalance as saveBalance, BALANCE_KEY } from '@/lib/store';
 import HomePage from './HomePage';
 import MinerPage from './MinerPage';
 import BalancePage from './BalancePage';
@@ -23,8 +24,22 @@ const navItems: { id: Page; label: string; icon: string }[] = [
 
 export default function Index() {
   const [page, setPage] = useState<Page>('home');
-  const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState(() => getBalance());
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === BALANCE_KEY) setBalance(getBalance());
+    };
+    window.addEventListener('storage', onStorage);
+    const interval = setInterval(() => setBalance(getBalance()), 1000);
+    return () => { window.removeEventListener('storage', onStorage); clearInterval(interval); };
+  }, []);
+
+  const handleBalanceChange = (val: number) => {
+    saveBalance(val);
+    setBalance(val);
+  };
 
   const navigate = (p: string) => {
     setPage(p as Page);
@@ -34,8 +49,8 @@ export default function Index() {
   const renderPage = () => {
     switch (page) {
       case 'home': return <HomePage onNavigate={navigate} balance={balance} />;
-      case 'miner': return <MinerPage balance={balance} onBalanceChange={setBalance} />;
-      case 'aviator': return <AviatorPage balance={balance} onBalanceChange={setBalance} />;
+      case 'miner': return <MinerPage balance={balance} onBalanceChange={handleBalanceChange} />;
+      case 'aviator': return <AviatorPage balance={balance} onBalanceChange={handleBalanceChange} />;
       case 'balance': return <BalancePage balance={balance} onNavigate={navigate} />;
       case 'deposit': return <DepositPage />;
       case 'withdrawal': return <WithdrawalPage balance={balance} />;

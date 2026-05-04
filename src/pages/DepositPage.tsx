@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Icon from '@/components/ui/icon';
+import { getDeposits, saveDeposits } from '@/lib/store';
 
 const AMOUNTS = [200, 500, 1000, 2000, 5000];
 
@@ -11,9 +12,9 @@ export default function DepositPage() {
   const [customAmount, setCustomAmount] = useState('');
   const [step, setStep] = useState<'select' | 'instructions' | 'pending'>('select');
   const [copied, setCopied] = useState(false);
+  const requestIdRef = useRef<string>('');
 
   const finalAmount = customAmount ? parseInt(customAmount) || 0 : amount;
-  const payCode = `MINE-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
   const copy = (text: string) => {
     navigator.clipboard?.writeText(text);
@@ -125,7 +126,14 @@ export default function DepositPage() {
         </div>
 
         <button
-          onClick={() => setStep('pending')}
+          onClick={() => {
+            const id = `D${Date.now()}`;
+            requestIdRef.current = id;
+            const deposits = getDeposits();
+            deposits.unshift({ id, amount: finalAmount, time: new Date().toLocaleString('ru-RU'), status: 'pending' });
+            saveDeposits(deposits);
+            setStep('pending');
+          }}
           className="w-full py-4 rounded-xl font-oswald text-xl font-bold btn-gold glow-gold"
         >
           ✅ Я ПЕРЕВЁЛ ДЕНЬГИ

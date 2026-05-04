@@ -1,32 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
+import {
+  getBalance, setBalance,
+  getDeposits, saveDeposits,
+  getWithdrawals, saveWithdrawals,
+  type DepositRequest, type WithdrawalRequest,
+} from '@/lib/store';
 
 type PaymentStatus = 'pending' | 'approved' | 'rejected';
-
-interface Payment {
-  id: string;
-  userId: string;
-  userName: string;
-  method: 'sber' | 'beeline';
-  amount: number;
-  time: string;
-  status: PaymentStatus;
-  phone?: string;
-  comment?: string;
-}
-
-const initialPayments: Payment[] = [
-  { id: 'P001', userId: '4821', userName: 'Игрок #4821', method: 'beeline', amount: 2000, time: '05.05.2026 12:15', status: 'pending', phone: '+7 (962) 903-15-56' },
-  { id: 'P002', userId: '3312', userName: 'Игрок #3312', method: 'beeline', amount: 500, time: '05.05.2026 11:40', status: 'pending', phone: '+7 (962) 903-15-56' },
-  { id: 'P003', userId: '7754', userName: 'Игрок #7754', method: 'beeline', amount: 5000, time: '05.05.2026 10:22', status: 'pending', phone: '+7 (962) 903-15-56' },
-  { id: 'P004', userId: '2200', userName: 'Игрок #2200', method: 'beeline', amount: 1000, time: '04.05.2026 22:50', status: 'approved', phone: '+7 (962) 903-15-56' },
-  { id: 'P005', userId: '9901', userName: 'Игрок #9901', method: 'beeline', amount: 300, time: '04.05.2026 20:10', status: 'rejected', phone: '+7 (962) 903-15-56' },
-];
-
-const withdrawals = [
-  { id: 'W001', userName: 'Игрок #4821', amount: 1500, phone: '+7 (900) 123-45-67', bank: 'Сбербанк', time: '04.05.2026 20:10', status: 'pending' as PaymentStatus },
-  { id: 'W002', userName: 'Игрок #3312', amount: 3000, phone: '+7 (915) 987-65-43', bank: 'Тинькофф', time: '04.05.2026 18:30', status: 'approved' as PaymentStatus },
-];
+type AdminTab = 'deposits' | 'withdrawals';
 
 const ADMIN_PASSWORD = '2007';
 
@@ -34,21 +16,50 @@ export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [wrongPass, setWrongPass] = useState(false);
-  const [payments, setPayments] = useState<Payment[]>(initialPayments);
-  const [tab, setTab] = useState<'deposits' | 'withdrawals'>('deposits');
-  const [filter, setFilter] = useState<PaymentStatus | 'all'>('pending');
+  const [deposits, setDeposits] = useState<DepositRequest[]>(() => getDeposits());
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>(() => getWithdrawals());
+  const [tab, setTab] = useState<AdminTab>('deposits');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+
+  useEffect(() => {
+    if (!authenticated) return;
+    const interval = setInterval(() => {
+      setDeposits(getDeposits());
+      setWithdrawals(getWithdrawals());
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [authenticated]);
 
   const login = () => {
     if (password === ADMIN_PASSWORD) {
       setAuthenticated(true);
+      setDeposits(getDeposits());
+      setWithdrawals(getWithdrawals());
     } else {
       setWrongPass(true);
       setTimeout(() => setWrongPass(false), 2000);
     }
   };
 
-  const updateStatus = (id: string, status: PaymentStatus) => {
-    setPayments(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+  const approveDeposit = (id: string) => {
+    const dep = deposits.find(d => d.id === id);
+    if (!dep) return;
+    const updated = deposits.map(d => d.id === id ? { ...d, status: 'approved' as const } : d);
+    saveDeposits(updated);
+    setDeposits(updated);
+    setBalance(getBalance() + dep.amount);
+  };
+
+  const rejectDeposit = (id: string) => {
+    const updated = deposits.map(d => d.id === id ? { ...d, status: 'rejected' as const } : d);
+    saveDeposits(updated);
+    setDeposits(updated);
+  };
+
+  const confirmWithdrawal = (id: string) => {
+    const updated = withdrawals.map(w => w.id === id ? { ...w, status: 'done' as const } : w);
+    saveWithdrawals(updated);
+    setWithdrawals(updated);
   };
 
   if (!authenticated) {
@@ -81,12 +92,13 @@ export default function AdminPage() {
     );
   }
 
-  const pendingDeposits = payments.filter(p => p.status === 'pending').length;
+  const pendingDeposits = deposits.filter(d => d.status === 'pending').length;
   const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending').length;
 
-  const filteredPayments = tab === 'deposits'
-    ? payments.filter(p => filter === 'all' || p.status === filter)
-    : withdrawals.filter(w => filter === 'all' || w.status === filter);
+  const filteredDeposits = deposits.filter(d => filter === 'all' || d.status === filter);
+  const filteredWithdrawals = withdrawals.filter(w =>
+    filter === 'all' || (filter === 'approved' && w.status === 'done') || (filter === 'pending' && w.status === 'pending')
+  );
 
   return (
     <div className="animate-slide-up space-y-5">
@@ -109,7 +121,7 @@ export default function AdminPage() {
         </div>
         <div className="card-game p-3 text-center">
           <div className="font-oswald text-2xl font-bold text-neon-green">
-            ₽ {payments.filter(p => p.status === 'approved').reduce((a, p) => a + p.amount, 0).toLocaleString('ru-RU')}
+            ₽ {deposits.filter(d => d.status === 'approved').reduce((a, d) => a + d.amount, 0).toLocaleString('ru-RU')}
           </div>
           <div className="text-muted-foreground text-xs">Принято</div>
         </div>
@@ -117,34 +129,21 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="flex gap-2">
-        <button
-          onClick={() => setTab('deposits')}
-          className={`flex-1 py-2.5 rounded-xl font-oswald font-bold transition-all ${tab === 'deposits' ? 'btn-gold' : 'glass-card text-muted-foreground'}`}
-        >
-          Пополнения {pendingDeposits > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-xs">{pendingDeposits}</span>
-          )}
+        <button onClick={() => setTab('deposits')}
+          className={`flex-1 py-2.5 rounded-xl font-oswald font-bold transition-all ${tab === 'deposits' ? 'btn-gold' : 'glass-card text-muted-foreground'}`}>
+          Пополнения {pendingDeposits > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-xs">{pendingDeposits}</span>}
         </button>
-        <button
-          onClick={() => setTab('withdrawals')}
-          className={`flex-1 py-2.5 rounded-xl font-oswald font-bold transition-all ${tab === 'withdrawals' ? 'btn-gold' : 'glass-card text-muted-foreground'}`}
-        >
-          Выводы {pendingWithdrawals > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-xs">{pendingWithdrawals}</span>
-          )}
+        <button onClick={() => setTab('withdrawals')}
+          className={`flex-1 py-2.5 rounded-xl font-oswald font-bold transition-all ${tab === 'withdrawals' ? 'btn-gold' : 'glass-card text-muted-foreground'}`}>
+          Выводы {pendingWithdrawals > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-500 text-white text-xs">{pendingWithdrawals}</span>}
         </button>
       </div>
 
       {/* Status filter */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         {(['all', 'pending', 'approved', 'rejected'] as const).map(s => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-rubik transition-all ${
-              filter === s ? 'btn-gold' : 'glass-card text-muted-foreground'
-            }`}
-          >
+          <button key={s} onClick={() => setFilter(s)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-rubik transition-all ${filter === s ? 'btn-gold' : 'glass-card text-muted-foreground'}`}>
             {s === 'all' ? 'Все' : s === 'pending' ? '⏳ Ожидают' : s === 'approved' ? '✅ Одобрены' : '❌ Отклонены'}
           </button>
         ))}
@@ -153,82 +152,69 @@ export default function AdminPage() {
       {/* Payments list */}
       <div className="space-y-3">
         {tab === 'deposits' ? (
-          (filteredPayments as Payment[]).map((payment) => (
-            <div key={payment.id} className={`card-game p-4 ${payment.status === 'pending' ? 'border-yellow-500/30' : ''}`}>
+          filteredDeposits.length === 0
+            ? <div className="card-game p-8 text-center text-muted-foreground">Нет заявок</div>
+            : filteredDeposits.map((dep) => (
+            <div key={dep.id} className={`card-game p-4 ${dep.status === 'pending' ? 'border-yellow-500/30' : ''}`}>
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-oswald font-bold text-gold">#{payment.id}</span>
+                    <span className="font-oswald font-bold text-gold text-sm">#{dep.id.slice(-6)}</span>
                     <span className={`px-2 py-0.5 rounded-full text-xs ${
-                      payment.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                      payment.status === 'approved' ? 'bg-green-500/20 text-neon-green' :
+                      dep.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                      dep.status === 'approved' ? 'bg-green-500/20 text-neon-green' :
                       'bg-red-500/20 text-neon-red'
                     }`}>
-                      {payment.status === 'pending' ? '⏳ Ожидает' : payment.status === 'approved' ? '✅ Одобрен' : '❌ Отклонён'}
+                      {dep.status === 'pending' ? '⏳ Ожидает' : dep.status === 'approved' ? '✅ Одобрен' : '❌ Отклонён'}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-0.5">{payment.userName} · {payment.time}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{dep.time}</p>
                 </div>
-                <div className="font-oswald text-xl font-bold text-gold">₽ {payment.amount.toLocaleString('ru-RU')}</div>
+                <div className="font-oswald text-xl font-bold text-gold">₽ {dep.amount.toLocaleString('ru-RU')}</div>
               </div>
-
-              <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                <div className="glass-card p-2 rounded-lg">
-                  <span className="text-muted-foreground text-xs">Метод</span>
-                  <p className="font-medium mt-0.5">🟡 Билайн</p>
-                </div>
-                {payment.comment && (
-                  <div className="glass-card p-2 rounded-lg">
-                    <span className="text-muted-foreground text-xs">Код</span>
-                    <p className="font-mono font-bold text-yellow-400 mt-0.5">{payment.comment}</p>
-                  </div>
-                )}
+              <div className="glass-card p-2 rounded-lg mb-3 text-sm">
+                <span className="text-muted-foreground text-xs">Метод</span>
+                <p className="font-medium mt-0.5">🟡 Билайн · +7 (962) 903-15-56</p>
               </div>
-
-              {payment.status === 'pending' && (
+              {dep.status === 'pending' && (
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => updateStatus(payment.id, 'approved')}
-                    className="flex-1 py-2.5 rounded-lg btn-green font-oswald font-bold text-sm flex items-center justify-center gap-1.5"
-                  >
-                    <Icon name="Check" size={16} />
-                    ОДОБРИТЬ
+                  <button onClick={() => approveDeposit(dep.id)}
+                    className="flex-1 py-2.5 rounded-lg btn-green font-oswald font-bold text-sm flex items-center justify-center gap-1.5">
+                    <Icon name="Check" size={16} /> ОДОБРИТЬ
                   </button>
-                  <button
-                    onClick={() => updateStatus(payment.id, 'rejected')}
+                  <button onClick={() => rejectDeposit(dep.id)}
                     className="flex-1 py-2.5 rounded-lg font-oswald font-bold text-sm flex items-center justify-center gap-1.5"
-                    style={{ background: 'rgba(220,60,60,0.15)', border: '1px solid rgba(220,60,60,0.3)', color: 'hsl(var(--neon-red))' }}
-                  >
-                    <Icon name="X" size={16} />
-                    ОТКЛОНИТЬ
+                    style={{ background: 'rgba(220,60,60,0.15)', border: '1px solid rgba(220,60,60,0.3)', color: 'hsl(var(--neon-red))' }}>
+                    <Icon name="X" size={16} /> ОТКЛОНИТЬ
                   </button>
                 </div>
               )}
             </div>
           ))
         ) : (
-          withdrawals.filter(w => filter === 'all' || w.status === filter).map((w) => (
+          filteredWithdrawals.length === 0
+            ? <div className="card-game p-8 text-center text-muted-foreground">Нет заявок</div>
+            : filteredWithdrawals.map((w) => (
             <div key={w.id} className="card-game p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-oswald font-bold text-gold">#{w.id}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                      w.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                      w.status === 'approved' ? 'bg-green-500/20 text-neon-green' :
-                      'bg-red-500/20 text-neon-red'
-                    }`}>
-                      {w.status === 'pending' ? '⏳ Ожидает' : w.status === 'approved' ? '✅ Отправлен' : '❌ Отклонён'}
+                    <span className="font-oswald font-bold text-gold text-sm">#{w.id.slice(-6)}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${w.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-neon-green'}`}>
+                      {w.status === 'pending' ? '⏳ Ожидает' : '✅ Выполнен'}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-0.5">{w.userName} · {w.time}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{w.time}</p>
                 </div>
-                <div className="font-oswald text-xl font-bold text-gold">₽ {w.amount.toLocaleString('ru-RU')}</div>
+                <div>
+                  <div className="font-oswald text-xl font-bold text-gold">₽ {w.amount.toLocaleString('ru-RU')}</div>
+                  <div className="text-neon-green text-xs text-right">→ ₽ {w.payout.toLocaleString('ru-RU')}</div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
                 <div className="glass-card p-2 rounded-lg">
                   <span className="text-muted-foreground text-xs">Телефон СБП</span>
-                  <p className="font-medium mt-0.5">{w.phone}</p>
+                  <p className="font-medium mt-0.5 text-xs">{w.phone}</p>
                 </div>
                 <div className="glass-card p-2 rounded-lg">
                   <span className="text-muted-foreground text-xs">Банк</span>
@@ -236,20 +222,15 @@ export default function AdminPage() {
                 </div>
               </div>
               {w.status === 'pending' && (
-                <button className="w-full py-2.5 rounded-lg btn-green font-oswald font-bold text-sm flex items-center justify-center gap-1.5">
-                  <Icon name="Send" size={16} />
-                  ПОДТВЕРДИТЬ ПЕРЕВОД
+                <button onClick={() => confirmWithdrawal(w.id)}
+                  className="w-full py-2.5 rounded-lg btn-green font-oswald font-bold text-sm flex items-center justify-center gap-1.5">
+                  <Icon name="Send" size={16} /> ПОДТВЕРДИТЬ ПЕРЕВОД
                 </button>
               )}
             </div>
           ))
         )}
 
-        {filteredPayments.length === 0 && (
-          <div className="card-game p-8 text-center text-muted-foreground">
-            Нет записей
-          </div>
-        )}
       </div>
     </div>
   );
