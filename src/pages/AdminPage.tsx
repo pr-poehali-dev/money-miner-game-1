@@ -16,11 +16,11 @@ interface Payment {
 }
 
 const initialPayments: Payment[] = [
-  { id: 'P001', userId: '4821', userName: 'Игрок #4821', method: 'sber', amount: 2000, time: '05.05.2026 12:15', status: 'pending' },
-  { id: 'P002', userId: '3312', userName: 'Игрок #3312', method: 'beeline', amount: 500, time: '05.05.2026 11:40', status: 'pending', comment: 'MINE-AB3X7Y' },
-  { id: 'P003', userId: '7754', userName: 'Игрок #7754', method: 'sber', amount: 5000, time: '05.05.2026 10:22', status: 'pending' },
-  { id: 'P004', userId: '2200', userName: 'Игрок #2200', method: 'beeline', amount: 1000, time: '04.05.2026 22:50', status: 'approved', comment: 'MINE-QW9Z12' },
-  { id: 'P005', userId: '9901', userName: 'Игрок #9901', method: 'sber', amount: 300, time: '04.05.2026 20:10', status: 'rejected' },
+  { id: 'P001', userId: '4821', userName: 'Игрок #4821', method: 'beeline', amount: 2000, time: '05.05.2026 12:15', status: 'pending', phone: '+7 (962) 903-15-56' },
+  { id: 'P002', userId: '3312', userName: 'Игрок #3312', method: 'beeline', amount: 500, time: '05.05.2026 11:40', status: 'pending', phone: '+7 (962) 903-15-56' },
+  { id: 'P003', userId: '7754', userName: 'Игрок #7754', method: 'beeline', amount: 5000, time: '05.05.2026 10:22', status: 'pending', phone: '+7 (962) 903-15-56' },
+  { id: 'P004', userId: '2200', userName: 'Игрок #2200', method: 'beeline', amount: 1000, time: '04.05.2026 22:50', status: 'approved', phone: '+7 (962) 903-15-56' },
+  { id: 'P005', userId: '9901', userName: 'Игрок #9901', method: 'beeline', amount: 300, time: '04.05.2026 20:10', status: 'rejected', phone: '+7 (962) 903-15-56' },
 ];
 
 const withdrawals = [
@@ -76,7 +76,7 @@ export default function AdminPage() {
             ВОЙТИ
           </button>
         </div>
-        <p className="text-muted-foreground text-xs">Демо-пароль: 1234</p>
+
       </div>
     );
   }
@@ -175,7 +175,7 @@ export default function AdminPage() {
               <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
                 <div className="glass-card p-2 rounded-lg">
                   <span className="text-muted-foreground text-xs">Метод</span>
-                  <p className="font-medium mt-0.5">{payment.method === 'sber' ? '🟢 Сбербанк' : '🟡 Билайн'}</p>
+                  <p className="font-medium mt-0.5">🟡 Билайн</p>
                 </div>
                 {payment.comment && (
                   <div className="glass-card p-2 rounded-lg">
